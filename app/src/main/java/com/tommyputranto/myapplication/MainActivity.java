@@ -10,32 +10,35 @@ import com.google.android.things.pio.Gpio;
 import com.google.android.things.pio.PeripheralManagerService;
 
 import java.io.IOException;
+import java.sql.Time;
+import java.util.List;
 
 public class MainActivity extends Activity {
 
    private static final String TAG = MainActivity.class.getSimpleName();
-       private static final int INTERVAL_BETWEEN_BLINKS_MS = 1000;
+       private static final int INTERVAL_BETWEEN_BLINKS_MS = 2000;
 
        private Handler mHandler = new Handler();
        private Gpio mLedGpio;
 
-
+int i = 1;
+    boolean ledStatus= true;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.i(TAG, "Starting BlinkActivity");
-
-        PeripheralManagerService service = new PeripheralManagerService();
+        PeripheralManagerService managerService = new PeripheralManagerService();
         try {
-            String pinName = BoardDefaults.getGPIOForLED();
-            mLedGpio = service.openGpio(pinName);
-            mLedGpio.setDirection(Gpio.DIRECTION_OUT_INITIALLY_LOW);
-            Log.i(TAG, "Start blinking LED GPIO pin");
-
+            mLedGpio = managerService.openGpio(BoardDefaults.getGPIOForLED());
+            mLedGpio.setDirection(Gpio.DIRECTION_OUT_INITIALLY_HIGH);
+            mLedGpio.setActiveType(Gpio.ACTIVE_HIGH);
+            mLedGpio.setValue(ledStatus);
             mHandler.post(mBlinkRunnable);
+            Log.e(TAG, mLedGpio.toString()+ " "+ mLedGpio.getValue());
         } catch (IOException e) {
-            Log.e(TAG, "Error on PeripheralIO API", e);
+            e.printStackTrace();
         }
+
     }
 
     @Override
@@ -54,19 +57,28 @@ public class MainActivity extends Activity {
         }
     }
 
+    Runnable test = new Runnable() {
+        @Override
+        public void run() {
+            try {
+                mLedGpio.setValue(true);
+                mHandler.postDelayed(test, INTERVAL_BETWEEN_BLINKS_MS);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+        }
+    };
     private Runnable mBlinkRunnable = new Runnable() {
         @Override
         public void run() {
-            // Exit Runnable if the GPIO is already closed
             if (mLedGpio == null) {
                 return;
             }
             try {
-                // Toggle the GPIO state
-                mLedGpio.setValue(!mLedGpio.getValue());
-                Log.d(TAG, "State set to " + mLedGpio.getValue());
-
-                // Reschedule the same runnable in {#INTERVAL_BETWEEN_BLINKS_MS} milliseconds
+                mLedGpio.setValue(!ledStatus);
+                ledStatus = !ledStatus;
+                Log.e(TAG, ledStatus+" ");
                 mHandler.postDelayed(mBlinkRunnable, INTERVAL_BETWEEN_BLINKS_MS);
             } catch (IOException e) {
                 Log.e(TAG, "Error on PeripheralIO API", e);

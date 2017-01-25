@@ -27,7 +27,7 @@ public class BoardDefaults {
             case DEVICE_RPI3:
                 return "BCM6";
             case DEVICE_NXP:
-                return "GPIO4_IO21";
+                return "GPIO4_IO19";
             default:
                 throw new IllegalStateException("Unknown Build.DEVICE " + Build.DEVICE);
         }
